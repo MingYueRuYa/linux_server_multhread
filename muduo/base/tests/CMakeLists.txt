@@ -4,6 +4,9 @@ target_link_libraries(atomic_unittest muduo_base)
 add_executable(exception_test Exception_test)
 target_link_libraries(exception_test muduo_base)
 
+add_executable(mutex_test Mutex_test)
+target_link_libraries(mutex_test muduo_base)
+
 add_executable(thread_unittest Thread_unittest)
 target_link_libraries(thread_unittest muduo_base)
 

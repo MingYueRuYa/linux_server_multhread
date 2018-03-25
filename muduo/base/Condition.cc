@@ -1,5 +1,5 @@
 /*
- * Exception.h
+ * Condition.cc
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,32 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MUDUO_BASE_EXCEPTION_H
-#define MUDUO_BASE_EXCEPTION_H
+#include <muduo/base/Condition.h>
 
-#include <muduo/base/Types.h>
-#include <exception>
-
-namespace muduo
+// return true if time out, false otherwise
+bool Condition::waitForSeconds(int seconds)
 {
-class Exception : public std::exception
-{
-public:    
-    explicit Exception(const char *what);
-    explicit Exception(const string &wath);
-    virtual ~Exception() throw();
-    
-    virtual const char *what() const throw();
-    const char *stackTrace() const throw();
-    
-private:
-    void fillStackTrace();
-    string demangle(const char *symbol);
-
-private:
-    string message_;
-    string stack_;
-};
+    struct timespec abstime;
+    clock_gettime(CLOCK_REALTIME, &abstime);
+    abstime.tv_sec += seconds;
+    return ETIMEDOUT == pthread_cond_timewait(&pcond_, 
+                                mutex_.getPthreadMutex(), 
+                                &abstime);
 }
-
-#endif //MUDUO_BASE_EXCEPTION_H

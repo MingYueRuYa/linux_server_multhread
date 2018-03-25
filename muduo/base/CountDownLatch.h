@@ -1,5 +1,5 @@
 /*
- * Exception.h
+ * CountDownLatch.h
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,32 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MUDUO_BASE_EXCEPTION_H
-#define MUDUO_BASE_EXCEPTION_H
+#ifndef MUDUO_BASE_COUNTDOWNLATCH_H
+#define MUDUO_BASE_COUNTDOWNLATCH_H
 
-#include <muduo/base/Types.h>
-#include <exception>
+#include <muduo/base/Condition.h>
+#include <muduo/base/Mutex.h>
+#include <boost/noncopyable.h>
 
 namespace muduo
 {
-class Exception : public std::exception
+class CountDownLatch : boost::noncopyable
 {
-public:    
-    explicit Exception(const char *what);
-    explicit Exception(const string &wath);
-    virtual ~Exception() throw();
-    
-    virtual const char *what() const throw();
-    const char *stackTrace() const throw();
-    
-private:
-    void fillStackTrace();
-    string demangle(const char *symbol);
+public:
+    explicit CountDownLatch(int count);
+
+    void wait();
+
+    void countDown();
+
+    int getCount() const;
 
 private:
-    string message_;
-    string stack_;
+    mutable MutexLock mutex_;
+    Condition condition_;
+    int count_;
 };
 }
 
-#endif //MUDUO_BASE_EXCEPTION_H
+#endif // MUDUO_BASE_COUNTDOWNLATCH_H

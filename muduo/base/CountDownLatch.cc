@@ -1,5 +1,5 @@
 /*
- * Exception.h
+ * CountDownLatch.cc
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,32 +15,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MUDUO_BASE_EXCEPTION_H
-#define MUDUO_BASE_EXCEPTION_H
+#include <muduo/base/CountDownLatch.h>
 
-#include <muduo/base/Types.h>
-#include <exception>
+using namespace muduo;
 
-namespace muduo
+CountDownLatch::CountDownLatch(int count)
+    : mutex_(),
+      condition_(mutex_)  
+      count_(count)
 {
-class Exception : public std::exception
-{
-public:    
-    explicit Exception(const char *what);
-    explicit Exception(const string &wath);
-    virtual ~Exception() throw();
-    
-    virtual const char *what() const throw();
-    const char *stackTrace() const throw();
-    
-private:
-    void fillStackTrace();
-    string demangle(const char *symbol);
-
-private:
-    string message_;
-    string stack_;
-};
 }
 
-#endif //MUDUO_BASE_EXCEPTION_H
+void CountDownLatch::wait()
+{
+    MutexLockGuard lock(mutex_);
+    while (count_ > 0) {
+        condition_.wait();
+    }
+}
+
+void CountDownLatch::countDown()
+{
+    MutexLockGuard lock(mutex_);
+    --count_;
+    if (0 == count_) {
+        condition_.notifyAll();
+    }
+}
+
+int CountDownLatch::getCount() const
+{
+    MutexLockGuard lock(mutex_);
+    return count_;
+}

@@ -1,6 +1,5 @@
 /*
  * Thread.cc
- * Copyright (c) 2018 liu <714049438@qq.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
