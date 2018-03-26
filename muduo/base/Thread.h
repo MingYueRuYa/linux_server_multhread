@@ -38,7 +38,7 @@ public:
     void start();
     int join(); // return pthread_join()
 
-    bool start() const { return started_; } 
+    bool started() const { return started_; } 
 
     //pthread_t pthreadId() const { return pthreadId_; }
     pid_t tid() const { return tid_; }

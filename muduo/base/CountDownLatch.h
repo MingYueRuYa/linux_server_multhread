@@ -20,7 +20,7 @@
 
 #include <muduo/base/Condition.h>
 #include <muduo/base/Mutex.h>
-#include <boost/noncopyable.h>
+#include <boost/noncopyable.hpp>
 
 namespace muduo
 {

@@ -21,7 +21,7 @@ using namespace muduo;
 
 CountDownLatch::CountDownLatch(int count)
     : mutex_(),
-      condition_(mutex_)  
+      condition_(mutex_),
       count_(count)
 {
 }

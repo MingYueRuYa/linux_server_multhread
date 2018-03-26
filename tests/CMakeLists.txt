@@ -1,3 +1,9 @@
+add_executable(countdownlatch1 CountDownLatch1)
+target_link_libraries(countdownlatch1 muduo_base)
+
+add_executable(countdownlatch2 CountDownLatch2)
+target_link_libraries(countdownlatch2 muduo_base)
+
 add_executable(deadlock_test Deadlock_test)
 target_link_libraries(deadlock_test muduo_base)
 

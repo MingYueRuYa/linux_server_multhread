@@ -1,4 +1,5 @@
 set( base_SRCS
+    CountDownLatch.cc
     Exception.cc
     Thread.cc
     Timestamp.cc 
