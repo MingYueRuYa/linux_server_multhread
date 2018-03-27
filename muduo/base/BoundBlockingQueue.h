@@ -31,11 +31,11 @@ template<typename T>
 class BoundBlockingQueue : boost::noncopyable
 {
 public:
-    BoundBlockingQueue() 
+    BoundBlockingQueue(int maxSize) 
         : mutex_(),
           notEmpty_(mutex_),
           notFull_(mutex_),
-          queue_()
+          queue_(maxSize)
     {}
 
     void put(const T &x)
@@ -45,7 +45,7 @@ public:
             notFull_.wait();
         }
         
-        assert(queue_.full());
+        assert(! queue_.full());
         queue_.push_back(x);
         notEmpty_.notify();
     }
@@ -57,39 +57,39 @@ public:
             notEmpty_.wait();
         }
         
-        assert(queue_.empty());
+        assert(! queue_.empty());
         T front(queue_.front());
         queue_.pop_front();
         notFull_.notify();
         return front;
     }
 
-    bool empty()
+    bool empty() const
     {
         MutexLockGuard lock(mutex_);
         return queue_.empty();
     }
 
-    bool full()
+    bool full() const
     {
         MutexLockGuard lock(mutex_);
         return queue_.full();
     }
 
-    int size()
+    int size() const
     {
         MutexLockGuard lock(mutex_);
         return queue_.size();
     }
 
-    int capacity()
+    int capacity() const
     {
         MutexLockGuard lock(mutex_);
         return queue_.capacity();
     }
 
 private:
-    MutexLock mutex_;
+    mutable MutexLock mutex_;
     Condition notEmpty_;
     Condition notFull_;
     boost::circular_buffer<T> queue_;

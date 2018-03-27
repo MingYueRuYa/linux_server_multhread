@@ -4,6 +4,12 @@ target_link_libraries(atomic_unittest muduo_base)
 add_executable(blockingqueue_test BlockingQueue_test)
 target_link_libraries(blockingqueue_test muduo_base)
 
+add_executable(blockingqueue_bench BlockingQueue_bench)
+target_link_libraries(blockingqueue_bench muduo_base)
+
+add_executable(boundblockingqueue_test BoundBlockingQueue_test)
+target_link_libraries(boundblockingqueue_test muduo_base)
+
 add_executable(exception_test Exception_test)
 target_link_libraries(exception_test muduo_base)
 
