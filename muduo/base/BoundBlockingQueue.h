@@ -27,7 +27,8 @@
 
 namespace muduo
 {
-class BoundBlockingQueue : boost:noncopyable
+template<typename T>
+class BoundBlockingQueue : boost::noncopyable
 {
 public:
     BoundBlockingQueue() 
@@ -40,11 +41,11 @@ public:
     void put(const T &x)
     {
         MutexLockGuard lock(mutex_);
-        while (queue_.fill()) {
+        while (queue_.full()) {
             notFull_.wait();
         }
         
-        assert(queue_.fill());
+        assert(queue_.full());
         queue_.push_back(x);
         notEmpty_.notify();
     }
@@ -63,10 +64,34 @@ public:
         return front;
     }
 
+    bool empty()
+    {
+        MutexLockGuard lock(mutex_);
+        return queue_.empty();
+    }
+
+    bool full()
+    {
+        MutexLockGuard lock(mutex_);
+        return queue_.full();
+    }
+
+    int size()
+    {
+        MutexLockGuard lock(mutex_);
+        return queue_.size();
+    }
+
+    int capacity()
+    {
+        MutexLockGuard lock(mutex_);
+        return queue_.capacity();
+    }
+
 private:
-    Condition notFull_;
+    MutexLock mutex_;
     Condition notEmpty_;
-    Mutex     mutex_;
+    Condition notFull_;
     boost::circular_buffer<T> queue_;
 };
 }
