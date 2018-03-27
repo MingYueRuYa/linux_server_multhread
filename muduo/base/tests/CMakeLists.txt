@@ -25,3 +25,5 @@ target_link_libraries(thread_unittest muduo_base)
 add_executable(timestamp_unittest Timestamp_unittest)
 target_link_libraries(timestamp_unittest muduo_base)
 
+add_executable(singleton_test Singleton_test)
+target_link_libraries(singleton_test muduo_base)

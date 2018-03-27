@@ -14,6 +14,7 @@ set(CXX_FLAGS
     -Werror
     -Wconversion
     -Wno-unused-parameter
+    -Wno-unused-local-typedefs
     -Wold-style-cast
     -Woverloaded-virtual
     -Wpointer-arith
