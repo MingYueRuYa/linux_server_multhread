@@ -22,6 +22,9 @@ target_link_libraries(threadpool_test muduo_base)
 add_executable(threadlocal_test ThreadLocal_test)
 target_link_libraries(threadlocal_test muduo_base)
 
+add_executable(threadlocalsingleton_test ThreadLocalSingleton_test)
+target_link_libraries(threadlocalsingleton_test muduo_base)
+
 add_executable(thread_unittest Thread_unittest)
 target_link_libraries(thread_unittest muduo_base)
 
