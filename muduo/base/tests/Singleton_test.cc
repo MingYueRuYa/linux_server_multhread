@@ -37,7 +37,8 @@ public:
     }
 
     const muduo::string &name() const { return name_; }
-    void setName(const muduo::string &name) { name_ = name; }
+    void setName(const muduo::string &n) 
+    { name_ = n; }
 
 private:
     muduo::string name_;

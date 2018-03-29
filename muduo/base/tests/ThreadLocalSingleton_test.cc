@@ -36,7 +36,7 @@ public:
             this, name_.c_str()); }
 
     const std::string &name() const { return name_; }
-    void setName(const std::string &name) { name_ = name; }
+    void setName(const std::string &n) { name_ = n; }
 
 private:
     std::string name_;
