@@ -68,6 +68,7 @@ void ThreadPool::stop()
 
 void ThreadPool::run(const Task &task)
 {
+    // 当队列为空时，在当前调用的线程执行task???
     if (threads_.empty()) {
         task();
     } else {
