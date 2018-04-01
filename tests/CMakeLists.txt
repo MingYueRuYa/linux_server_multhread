@@ -13,5 +13,8 @@ target_link_libraries(deadlock_test2 muduo_base)
 add_executable(log_test1 log_test1)
 target_link_libraries(log_test1 muduo_base)
 
+add_executable(log_test2 log_test2)
+target_link_libraries(log_test2 muduo_base)
+
 add_executable(pthread_atfork_test pthread_atfork_test)
 target_link_libraries(pthread_atfork_test muduo_base)
