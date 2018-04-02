@@ -1,6 +1,8 @@
 set( base_SRCS
     CountDownLatch.cc
     Exception.cc
+    FileUtil.cc
+    LogFile.cc
     Logging.cc
     LogStream.cc
     Thread.cc

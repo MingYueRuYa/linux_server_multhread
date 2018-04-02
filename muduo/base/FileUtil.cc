@@ -15,127 +15,128 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <muduo/base/LogFile.h>
-#include <muduo/base/Logging.h> //strerror_tl
-#include <muduo/base/ProcessInfo.h>
+#include <muduo/base/FileUtil.h>
+#include <boost/static_assert.hpp>
 
 #include <assert.h>
-#include <stdio.h>
-#include <time.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 using namespace muduo;
 
-// not thread safe
-class LogFile::File : boost::noncopyable
+FileUtil::SmallFile::SmallFile(StringPiece filename)
+    : fd_(::open(filename.data(), O_RDONLY | O_CLOEXEC)),
+      err_(0)
 {
-public:
-    explicit File(const string &filename)
-        : fp_(::fopen(filename.data(), "ae"))
-    {
-        assert(fp_);
-        ::setbuffer(fp_, buffer_, sizeof buffer_);
-    }
-    
-    ~File() { ::fclose(fp_); }
-
-    void append(const char *logline, const size_t len)
-    {
-        size_t n        = write(logline, len);
-        size_t remain   = len - n;
-        //remain > 0表示没有写完，需要继续写完直到写完
-        while (remain > 0) {
-            size_t x = write(logline+n, remain);
-            if (0 == x) {
-                int err = ferror(fp_);
-                if (err) {
-                    fprintf(stderr, "LogFile::File::append() failed %s\n",
-                            strerror_tl(err));
-                } // if
-                break;
-            } // if
-            n += x;
-            remain = len - n;
-        } // while
-        writtenBytes_ += len;
-    }
-
-    void flush()
-    {
-        ::fflush(fp_);
-    }
-
-    size_t writeenBytes() const { return writtenBytes_; }
-
-private:
-    size_t write(const char *logline, size_t len)
-    {
-#undef fwrite_unlocked        
-        return ::fwrite_unlocked(logline, 1, len, fp_);
-    }
-
-private:
-    FILE *fp_;
-    char buffer_[64*1024];
-    size_t writtenBytes_;
-};
-
-LogFile::LogFile(const string &basename, size_t rollSize,
-                 bool threadSafe,
-                 int flushInterval)
-    : basename_(basename),
-      rollSize_(rollSize),
-      flushInterval(flushInterval),
-      mutex_(threadSafe ? new MutexLock : NULL),
-      startOfPeriod(0),
-      lastRoll_(0),
-      lastFlush_(0)
-{
-    assert(basename.find('/') == string::npos);
-    rollFile();
-}
-
-LogFile::~LogFile()
-{}
-
-void LogFile::append(const char *logline, int len)
-{
-    if (mutex_) {
-        MutexLockGuard lock(*mutex_);
-        append_unlocked(logline, len);
-    } else {
-        append_unlocked(logline, len);
+    buf_[0] = '\0';
+    if (fd_ < 0) {
+        err_ = errno;
     }
 }
 
-void LogFile::flush()
+FileUtil::SmallFile::~SmallFile()
 {
-    if (mutex_) {
-        MutexLockGuard lock(mutex_);
-        file_->flush();
-    } else {
-        file_->flush();
+    if (fd_ >= 0) {
+        ::close(fd_);
     }
 }
 
-void LogFile::append_unlocked(const char *logline, int len)
+template<typename String>
+int FileUtil::SmallFile::readToString(int maxSize, 
+                                      String *content,
+                                      int64_t *fileSize,
+                                      int64_t *modifyTime,
+                                      int64_t *createTime)
 {
-    file_->append(logline, len);
-    
-    if (file_->writeenBytes() > rollSize_) {
-        rollFile();
+    BOOST_STATIC_ASSERT(sizeof(off_t) == 8);
+    assert(content != NULL);
+    int err = err_;
+    if (fd_ < 0) {
+        return err;
+    }
+
+    if (NULL == fileSize) {
+        return err;
+    }
+
+    content->clear();
+    struct stat statbuf;
+    if (::fstat(fd_, &statbuf) == 0) {
+        if (S_ISREG(statbuf.st_mode)) {
+            *fileSize = statbuf.st_size;
+            content->reserve(static_cast<int>(
+            std::min(implicit_cast<int64_t>(maxSize), *fileSize)));
+        } else if (S_ISDIR(statbuf.st_mode)) {
+            err = EISDIR;
+        } 
+        if (modifyTime) {
+            *modifyTime = statbuf.st_mtime;
+        }
+        if (createTime) {
+            *createTime = statbuf.st_ctime;
+        }
     } else {
-        if (count_ > kCheckTimeRoll_) {
-           count_ = 0; 
-           time_t now = ::time(NULL);
-           time_t thisPeriod = new / kRollPerSeconds_ * kRollPerSeconds_;
-           if (thisPeriod_ != startOfPeriod) {
-                rollFile();
-           } else if (now - lastFlush_ > flushInterval) {
-                lastFlush_ = now;
-                file_->flush();
-           }
+        err = errno;
+    }
+
+    while (content->size() < implicit_cast<size_t>(maxSize)) {
+        size_t toRead = std::min(implicit_cast<size_t>(maxSize)-
+                content->size(), sizeof(buf_));
+
+        ssize_t n = ::read(fd_, buf_, toRead);
+        if (n > 0) {
+            content->append(buf_, n);
         } else {
-            ++count_;
+            if (n < 0) {
+                err = errno;
+            }
+            break;
         }
     }
+
+    return err;
 }
+
+int FileUtil::SmallFile::readToBuffer(int *size)
+{
+    int err = err_;
+    if (fd_ < 0) {
+        return err;
+    }
+
+    ssize_t n = ::pread(fd_, buf_, sizeof(buf_)-1, 0);
+    if (n >= 0) {
+        if (size) {
+            *size = static_cast<int>(n);
+        }
+        buf_[n] = '\0';
+    } else {
+        err = errno;
+    }
+
+    return err;
+}
+
+template int FileUtil::readFile(StringPiece filename,
+                                int maxSize,
+                                string *content,
+                                int64_t *, int64_t *, int64_t *);
+
+template int FileUtil::readToString(int maxSize,
+                                    string *content,
+                                    int64_t *, int64_t *, int64_t *);
+
+#ifndef MUDUO_STD_STRING
+
+template int FileUtil::readFile(StringPiece filename,
+                                int maxSize,
+                                std::string *content,
+                                int64_t *, int64_t *, int64_t *);
+
+
+template int FileUtil::readToString(StringPiece filename,
+                                    int maxSize,
+                                    std::string *content,
+                                    int64_t *, int64_t *, int64_t *);
+#endif // MUDUO_STD_STRING
