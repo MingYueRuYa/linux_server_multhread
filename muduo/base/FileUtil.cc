@@ -123,7 +123,7 @@ template int FileUtil::readFile(StringPiece filename,
                                 string *content,
                                 int64_t *, int64_t *, int64_t *);
 
-template int FileUtil::readToString(int maxSize,
+template int FileUtil::SmallFile::readToString(int maxSize,
                                     string *content,
                                     int64_t *, int64_t *, int64_t *);
 
@@ -135,8 +135,9 @@ template int FileUtil::readFile(StringPiece filename,
                                 int64_t *, int64_t *, int64_t *);
 
 
-template int FileUtil::readToString(StringPiece filename,
-                                    int maxSize,
-                                    std::string *content,
-                                    int64_t *, int64_t *, int64_t *);
+template int FileUtil::SmallFile::readToString(int maxSize,
+                                               std::string *content,
+                                               int64_t *,
+                                               int64_t *, 
+                                               int64_t *);
 #endif // MUDUO_STD_STRING

@@ -84,9 +84,9 @@ LogFile::LogFile(const string &basename, size_t rollSize,
                  int flushInterval)
     : basename_(basename),
       rollSize_(rollSize),
-      flushInterval(flushInterval),
+      flushInterval_(flushInterval),
       mutex_(threadSafe ? new MutexLock : NULL),
-      startOfPeriod(0),
+      startOfPeriod_(0),
       lastRoll_(0),
       lastFlush_(0)
 {
@@ -110,7 +110,7 @@ void LogFile::append(const char *logline, int len)
 void LogFile::flush()
 {
     if (mutex_) {
-        MutexLockGuard lock(mutex_);
+        MutexLockGuard lock(*mutex_);
         file_->flush();
     } else {
         file_->flush();
@@ -127,10 +127,10 @@ void LogFile::append_unlocked(const char *logline, int len)
         if (count_ > kCheckTimeRoll_) {
            count_ = 0; 
            time_t now = ::time(NULL);
-           time_t thisPeriod = new / kRollPerSeconds_ * kRollPerSeconds_;
-           if (thisPeriod_ != startOfPeriod) {
+           time_t thisPeriod = now / kRollPerSeconds_ * kRollPerSeconds_;
+           if (thisPeriod != startOfPeriod_) {
                 rollFile();
-           } else if (now - lastFlush_ > flushInterval) {
+           } else if (now - lastFlush_ > flushInterval_) {
                 lastFlush_ = now;
                 file_->flush();
            }
@@ -151,16 +151,16 @@ void LogFile::rollFile()
     if (now > lastRoll_) {
         lastRoll_   = now;
         lastFlush_  = now;
-        startOfPeriod = start;
+        startOfPeriod_ = start;
         file_.reset(new File(filename));
     }
 }
 
-string LogFile::getLogFileName(const string &basename, time *now)
+string LogFile::getLogFileName(const string &basename, time_t *now)
 {
     string filename;
     filename.reserve(basename.size() + 64);
-    filename = basenae;
+    filename = basename;
 
     char timebuf[32]    = {0};
     char pidbuf[32]     = {0};
@@ -174,4 +174,5 @@ string LogFile::getLogFileName(const string &basename, time *now)
     snprintf(pidbuf, sizeof pidbuf, ".%d", ProcessInfo::pid());
     filename += pidbuf;
     filename += ".log";
+    return filename;
 }

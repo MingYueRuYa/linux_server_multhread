@@ -35,8 +35,11 @@ namespace FileUtil
 
         //return errno
         template<typename String>
-        int readToString(int maxSize, String *content, int64_t *fileSize,
-                        int64_t *modifyTime, int64_t *createTime);
+        int readToString(int maxSize, 
+                        String *content, 
+                        int64_t *fileSize,
+                        int64_t *modifyTime,
+                        int64_t *createTime);
 
         // return errno
         int readToBuffer(int *size);
